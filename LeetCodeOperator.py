@@ -10,6 +10,8 @@ import os
 import time
 import socket
 
+from SubmitStatus import SubmitStatus
+
  
 
 class LeetCodeOperator:
@@ -140,13 +142,13 @@ class LeetCodeOperator:
         result = self.page.locator("div.items-center").filter(has_text="通过的测试用例").nth(0).locator("span").nth(0)
         print(result.inner_text())
         if result.inner_text().find("通过") != -1:
-            return "success"
+            return SubmitStatus.SUCCESS
         else:
             message = self.page.locator("div.gap-4 > div.gap-4").filter(has_text="通过的测试用例").nth(0)
            # message.highlight()
            # self.page.wait_for_timeout(5000)
             print("error:", message.text_content())
-            return f"error:{message.text_content()}, 请获取题解信息重新编写代码"
+            return f"{SubmitStatus.ERROR} 错误信息为:{message.text_content()}"
 
     def _clear_lt_code(self, input: Locator):
         input.click()
@@ -224,12 +226,12 @@ class LeetCodeOperator:
         self.page.wait_for_timeout(3000)
         # 检查是否能做
         if vip.count() > 0:
-            return "会员专享"
+            return SubmitStatus.VIP
         # 检查是否有a题记录
         if success.count() > 0:
-            return "通过"
+            return SubmitStatus.SUCCESS
         else:
-            return "提交未通过"
+            return SubmitStatus.ERROR
 
     def __del__(self):
         """

@@ -7,6 +7,8 @@ from LeetCodeOperator import LeetCodeOperator
 
 import os
 from dotenv import load_dotenv
+
+from SubmitStatus import SubmitStatus
 load_dotenv()
 
 MODESCOPE_API_KEY = os.getenv("MODELSCOPE_API")
@@ -29,7 +31,7 @@ model = ModelFactory.create(
                  
 leetCodeOperator = LeetCodeOperator()
 agent = ChatAgent(
-    system_message="你是一个出色的leetcode竞赛选手, 你的任务是:完成网页题目代码的编写并提交，当提交返回success时结束任务,永远不要破坏输出格式不要输出多个答案， 注意：当判断代码正确时结束任务,",
+    system_message=f"你是一个出色的leetcode竞赛选手, 你的任务是:完成网页题目代码的编写并提交，当提交返回{SubmitStatus.SUCCESS}时结束任务,永远不要破坏输出格式不要输出多个答案， 注意：当判断代码正确时结束任务,",
     model=model,
     tools=[*leetCodeOperator.get_tools()],
     max_iteration=3,
@@ -62,8 +64,8 @@ def task_prompt(url, is_submit=False):
             return ''.join(rows) 
         '''
         5.确定代码没问题,提交代码
-        6. 提交代码通过,任务结束
-        7. 如果没有通过, 获取题解{question_solution}开始查看该题的思路
+        6. {SubmitStatus.SUCCESS},任务结束
+        7. 如果{SubmitStatus.ERROR}, 获取题解{question_solution}开始查看该题的思路
         8. 然后根据题解信息和报错信息重新编写代码再提交
         tips:
         提交代码通过后任务结束
@@ -84,13 +86,13 @@ if __name__ == "__main__":
             agent.reset()
             leetCodeOperator.set_url(question["url"])
             task_prompt_str = task_prompt(question["url"])
-            if question.get("submit_status") == "提交未通过":
+            if question.get("submit_status") == SubmitStatus.ERROR:
                 task_prompt_str = task_prompt(question["url"])
-            if question.get("submit_status") == "通过":
+            if question.get("submit_status") == SubmitStatus.SUCCESS:
                 continue
 
             status = leetCodeOperator.check_submit_status()
-            if status == "通过" or status == "会员专享":
+            if status == SubmitStatus.SUCCESS or status == SubmitStatus.VIP:
                 question.update({"submit_status": status})
                 question_message_list[i] = question
                 continue
